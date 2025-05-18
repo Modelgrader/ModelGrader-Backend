@@ -24,7 +24,11 @@ from ..services import problem_service
 
 @api_view([PUT])
 def upload_pdf(request, problem_id:str):
-    token = "" # request.header
-    file = ""
+    file = request.FILES.get('file')
+    token = request.user
+    if not file:
+        return Response(status=status.HTTP_400_BAD_REQUEST, data="No file")
     response = problem_service.upload_pdf(problem_id, file, token)
-    return Response("Hello")
+    return Response({
+        "status": response.status_code,
+    }, status=response.status_code)

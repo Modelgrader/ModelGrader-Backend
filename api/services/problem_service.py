@@ -20,8 +20,21 @@ from ..controllers.problem.get_all_problem_with_best_submission import *
 from ..controllers.problem.get_problem_in_topic_with_best_submission import *
 from ..controllers.problem.update_group_permission_to_problem import *
 from ..controllers.problem.get_problem_public import *
+from .auth_service import verifyToken
+from .permission_service import canManageProblem
 
 def upload_pdf(problem_id, file, token):
+    if not verifyToken(token):
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+    if not canManageProblem(token, problem_id):
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    try:
+        file_path = f"media/import-pdf/{problem_id}.pdf"
+        with open(file_path, 'wb') as f:
+            f.write(file.read())
+    except Exception as e:
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     # Get user from Token
     # If not access return ... -> verify
     # Get problem from ID
@@ -35,4 +48,4 @@ def upload_pdf(problem_id, file, token):
     500: Internal Server Error
     """
 
-    return ""
+    return Response(status=status.HTTP_200_OK)
