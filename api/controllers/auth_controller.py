@@ -21,17 +21,9 @@ from ..controllers.problem.get_problem_in_topic_with_best_submission import *
 from ..controllers.problem.update_group_permission_to_problem import *
 from ..controllers.problem.get_problem_public import *
 from ..services import problem_service
-from .auth_controller import extract_bearer_token
 
-@api_view([PUT])
-def upload_pdf(request, problem_id:str):
-    file = request.FILES.get('file')
-    token = extract_bearer_token(request)
-    if not token:
-        return Response(status=status.HTTP_400_BAD_REQUEST, data="No token")
-    if not file:
-        return Response(status=status.HTTP_400_BAD_REQUEST, data="No file")
-    response = problem_service.upload_pdf(problem_id, file, token)
-    return Response({
-        "status": response.status_code,
-    }, status=response.status_code)
+def extract_bearer_token(request):
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        return auth_header.split(' ')[1]
+    return None
