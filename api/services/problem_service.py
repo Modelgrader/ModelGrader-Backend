@@ -24,14 +24,13 @@ from .auth_service import verifyToken
 from .permission_service import canManageProblem
 
 def verifyProblem(problem_id):
-    # try:
-    #     problem = Problem.objects.get(problem_id=problem_id)
-    #     if not problem:
-    #         return False
-    #     return True
-    # except Problem.DoesNotExist:
-    #     return False
-    return True
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+        if not problem:
+            return False
+        return True
+    except Problem.DoesNotExist:
+        return False
 
 def upload_pdf(problem_id, file, token):
     if not verifyToken(token):
