@@ -12,15 +12,14 @@ def verifyToken(token):
     Check if user has valid token and not expired
     Return: True/False
     """
-    # try:
-    #     account = Account.objects.get(token=token)
-    #     if not account:
-    #         return False
-    #     account_dict = model_to_dict(account)
-    #     if account_dict['token_expire'] >= time():
-    #         return True
-    #     else:
-    #         return False
-    # except Account.DoesNotExist:
-    #     return False
-    return True
+    try:
+        account = Account.objects.get(token=token)
+        account_dict = model_to_dict(account)
+        if account_dict['token_expire'] >= time():
+            return True
+        else:
+            print("Token expired")
+            return False
+    except Account.DoesNotExist:
+        print(f"Token: {token} not found")
+        return False
