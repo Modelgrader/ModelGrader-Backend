@@ -34,11 +34,11 @@ def verifyProblem(problem_id):
 
 def upload_pdf(problem_id, file, token):
     if not verifyToken(token):
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
-    if not canManageProblem(token, problem_id):
-        return Response(status=status.HTTP_403_FORBIDDEN)
+        return Response(status=status.HTTP_401_UNAUTHORIZED, data="Token expired or not found")
     if not verifyProblem(problem_id):
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_404_NOT_FOUND, data="Problem not found")
+    if not canManageProblem(token, problem_id):
+        return Response(status=status.HTTP_403_FORBIDDEN, data="You don't have permission to edit this problem")
     try:
         file_path = f"media/import-pdf/{problem_id}.pdf"
         with open(file_path, 'wb') as f:
