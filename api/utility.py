@@ -18,3 +18,9 @@ def uploadProblemImportPDF(instance,filename):
 def regexMatching(regex:str,code:str)->bool:
     code = ";".join([i.strip() for i in code.split("\n") if i != ""])
     return re.search(regex, code)
+
+def extract_bearer_token(request):
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        return auth_header.split(' ')[1]
+    return None

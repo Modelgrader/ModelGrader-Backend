@@ -7,6 +7,7 @@ from ..models import Account, Problem,Testcase
 from rest_framework import status
 from django.forms.models import model_to_dict
 from ..serializers import *
+from ..utility import extract_bearer_token
 
 from ..controllers.problem.create_problem import *
 from ..controllers.problem.update_problem import *
@@ -21,7 +22,7 @@ from ..controllers.problem.get_problem_in_topic_with_best_submission import *
 from ..controllers.problem.update_group_permission_to_problem import *
 from ..controllers.problem.get_problem_public import *
 from ..services import problem_service
-from .auth_controller import extract_bearer_token
+
 
 @api_view([PUT])
 def upload_pdf(request, problem_id:str):
