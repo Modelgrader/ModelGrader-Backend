@@ -13,8 +13,6 @@ def verifyToken(token):
         if account_dict['token_expire'] >= time():
             return True
         else:
-            print("Token expired")
             return False
     except Account.DoesNotExist:
-        print(f"Token: {token} not found")
         return False
