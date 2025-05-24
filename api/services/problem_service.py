@@ -1,43 +1,27 @@
 # from ..utility import JSONParser, JSONParserOne, passwordEncryption
-from ..models import Problem
-from .auth_service import verifyToken
-from .permission_service import canManageProblem
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from api.sandbox.grader import PythonGrader
+from ..constant import GET,POST,PUT,DELETE
+from ..models import Account, Problem,Testcase
+from rest_framework import status
+from django.forms.models import model_to_dict
+from ..serializers import *
 
-def verifyProblem(problem_id):
-    try:
-        problem = Problem.objects.get(problem_id=problem_id)
-        if not problem:
-            return False
-        return True
-    except Problem.DoesNotExist:
-        return False
+from ..controllers.problem.create_problem import *
+from ..controllers.problem.update_problem import *
+from ..controllers.problem.delete_problem import *
+from ..controllers.problem.get_problem import *
+from ..controllers.problem.get_all_problems import *
+from ..controllers.problem.remove_bulk_problems import *
+from ..controllers.problem.get_all_problems_by_account import *
+from ..controllers.problem.validate_program import *
+from ..controllers.problem.get_all_problem_with_best_submission import *
+from ..controllers.problem.get_problem_in_topic_with_best_submission import *
+from ..controllers.problem.update_group_permission_to_problem import *
+from ..controllers.problem.get_problem_public import *
 
 def upload_pdf(problem_id, file, token):
-    if not verifyToken(token):
-        return {
-            "status_code": "401",
-            "message": "Token expired or invalid."
-        }
-    if not verifyProblem(problem_id):
-        return {
-            "status_code": "404",
-            "message": "Problem not found."
-        }
-    if not canManageProblem(token, problem_id):
-        return {
-            "status_code": "403",
-            "message": "You do not have permission to manage this problem."
-        }
-    try:
-        file_path = f"media/import-pdf/{problem_id}.pdf"
-        with open(file_path, 'wb') as f:
-            f.write(file.read())
-    except Exception as e:
-        return {
-            "status_code": "500",
-            "error": str(e)
-        }
-    return {"status_code": "204", "message": "File uploaded successfully."}
     # Get user from Token
     # If not access return ... -> verify
     # Get problem from ID
@@ -50,3 +34,5 @@ def upload_pdf(problem_id, file, token):
     403: Forbidden - No permission (User found)
     500: Internal Server Error
     """
+
+    return ""
