@@ -19,6 +19,7 @@ media/resource
 *jpg
 *jpeg
 *webp
+*.pdf
 tempCodeRunnerFile.py
 
 *.sqlite3
