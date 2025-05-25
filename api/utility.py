@@ -1,5 +1,7 @@
 from hashlib import sha512
 import regex as re
+import random
+import string
 
 def passwordEncryption(password):
     ePassword = sha512(str(password).encode('utf8'))
@@ -24,3 +26,23 @@ def extract_bearer_token(request):
     if auth_header and auth_header.startswith('Bearer '):
         return auth_header.split(' ')[1]
     return None
+
+def generate_random_string(length=7):
+    """Generate a random string of fixed length."""
+    letters = string.ascii_letters + string.digits
+    return ''.join(random.choice(letters) for i in range(length))
+
+def check_pdf(file) -> bool:
+    """
+    Check if the uploaded file is a PDF.
+    Returns True if it is a PDF, False otherwise.
+    """
+    if not file.name.lower().endswith('.pdf'):
+        return False
+    
+    header = file.read(4)
+    file.seek(0)
+    if header != b'%PDF':
+        return False
+    return True
+    
