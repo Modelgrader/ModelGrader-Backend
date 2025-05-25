@@ -12,16 +12,20 @@ def upload_pdf(request, problem_id:str):
     token = extract_bearer_token(request)
     if not token:
         return Response({
-            "status": "400",
-            "message": "Token not found."
+            "status": 400,
+            "error": "Token not found."
         }, status=status.HTTP_400_BAD_REQUEST)
     if not file:
         return Response({
-            "status": "400",
-            "message": "File not found."
+            "status": 400,
+            "error": "File not found."
         }, status=status.HTTP_400_BAD_REQUEST)
     response = problem_service.upload_pdf(problem_id, file, token)
+
+    if not response:
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     return Response({
         "status": response["status_code"],
-        "message": response["message"] if "message" in response else response["error"],
+        "error": response.get("error_message", "An error occurred."),
     }, status=response["status_code"])
