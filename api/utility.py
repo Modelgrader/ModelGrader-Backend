@@ -45,4 +45,16 @@ def check_pdf(file) -> bool:
     if header != b'%PDF':
         return False
     return True
+
+def ERROR_TYPE_TO_STATUS(errorType: str) -> int:
+    errorMap = {
+        "unauthorized": 401,
+        "not_found": 404,
+        "forbidden": 403,
+        "bad_request": 400,
+        "internal_error": 500,
+        "unknown": 500,
+    }
+
+    return errorMap.get(errorType, 500)
     

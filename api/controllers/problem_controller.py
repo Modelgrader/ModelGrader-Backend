@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from ..constant import PUT
 from rest_framework import status
-from ..utility import extract_bearer_token
+from ..utility import extract_bearer_token, ERROR_TYPE_TO_STATUS
 from ..services import problem_service
 
 @api_view([PUT])
@@ -24,8 +24,10 @@ def upload_pdf(request, problem_id:str):
 
     if not response:
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    status_code = ERROR_TYPE_TO_STATUS(response.errorType)
 
     return Response({
-        "status": response["status_code"],
-        "error": response.get("error_message", "An error occurred."),
-    }, status=response["status_code"])
+        "status": status_code,
+        "error": response.message,
+    }, status=status_code)
