@@ -45,7 +45,7 @@ def upload_pdf(problem_id, file, token):
         )
     if not check_pdf(file):
         return ServiceResult.error(
-            message="The uploaded file is not a valid PDF.",
+            message="The uploaded file is not a valid PDF or PDF file is too large.",
             errorType="bad_request"
         )
     try:
