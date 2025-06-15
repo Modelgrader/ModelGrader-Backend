@@ -13,6 +13,27 @@ def verifyProblem(problem_id):
         return True
     except Problem.DoesNotExist:
         return False
+    
+class InvalidTokenException(Exception):
+    def __init__(self):
+        self.message = "Token expired or invalid."
+        self.status = 401
+        super().__init__(self.message)
+
+class ProblemNotFoundException(Exception):
+    def __init__(self):
+        self.message = "Problem not found."
+        self.status = 404
+        super().__init__(self.message)
+
+class PermissionDeniedException(Exception):
+    def __init__(self):
+        self.message = "You do not have permission to manage this problem."
+        self.status = 403
+        super().__init__(self.message)
+
+class InvalidFileException(Exception):
+    pass
 
 def upload_pdf(problem_id, file, token):
     # Get user from Token
@@ -29,25 +50,13 @@ def upload_pdf(problem_id, file, token):
     """
     problem = Problem.objects.get(problem_id=problem_id) if verifyProblem(problem_id) else None
     if not verifyToken(token):
-        return ServiceResult.error(
-            message="Token expired or invalid.",
-            errorType="unauthorized"
-        )
+        raise InvalidTokenException()
     if not problem:
-        return ServiceResult.error(
-            message="Problem not found.",
-            errorType="not_found"
-        )
+        raise ProblemNotFoundException()
     if not canManageProblem(token, problem_id):
-        return ServiceResult.error(
-            message="You do not have permission to manage this problem.",
-            errorType="forbidden"
-        )
+        raise PermissionDeniedException()
     if not check_pdf(file):
-        return ServiceResult.error(
-            message="The uploaded file is not a valid PDF or PDF file is too large.",
-            errorType="bad_request"
-        )
+        raise InvalidFileException()
     try:
         file_name = "_".join(problem.title.split()) + "#" + generate_random_string()
         file_path = f"media/import-pdf/{file_name}.pdf"
@@ -61,3 +70,10 @@ def upload_pdf(problem_id, file, token):
             errorType="internal_error"
         )
     return None
+
+def get_problem_pdf(problem_id, token):
+    """
+    Get problem PDF file
+    Permission: Owner or User with any permission that can view problem
+    """
+    pass    

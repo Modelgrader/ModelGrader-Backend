@@ -53,6 +53,7 @@ urlpatterns = [
     path('submissions',submission.all_submission_view),
 
     path('v1/problems/<str:problem_id>/import/pdf',problem_controller.upload_pdf),
+    path('v1/problems/<str:problem_id>/pdf',problem_controller.get_problem_pdf),
 
     path('script',script.run_script),
 ]
