@@ -1,9 +1,15 @@
 # from ..utility import JSONParser, JSONParserOne, passwordEncryption
-from ..models import Problem
+from ..models import *
 from .auth_service import verifyToken
 from .permission_service import canManageProblem
 from ..utility import generate_random_string, check_pdf
 from .service_result import ServiceResult
+from api.utility import passwordEncryption
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+from api.sandbox.grader import PythonGrader
+from rest_framework import status
+from django.forms.models import model_to_dict
 
 def verifyProblem(problem_id):
     try:
@@ -32,8 +38,33 @@ class PermissionDeniedException(Exception):
         self.status = 403
         super().__init__(self.message)
 
+class ProblemNotFoundException(Exception):
+    def __init__(self):
+        self.message = "Problem not found."
+        self.status = 404
+        super().__init__(self.message)
+
 class InvalidFileException(Exception):
     pass
+
+def get_problem(problem_id,request, token):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+        testcases = Testcase.objects.filter(problem=problem,deprecated=False)
+        
+        domain = request.get_host()
+        pdf_filename = problem.pdf_url
+        problem.pdf_url = f"http://{domain}/media/import-pdf/{pdf_filename}"
+        return {
+            **model_to_dict(problem),
+            "testcases": [model_to_dict(testcase) for testcase in testcases]
+        }
+    except Problem.DoesNotExist:
+        raise ProblemNotFoundException()
+    except Exception as e:
+        print("Error: ", e)
+        raise e
+
 
 def upload_pdf(problem_id, file, token):
     # Get user from Token
@@ -58,7 +89,7 @@ def upload_pdf(problem_id, file, token):
     if not check_pdf(file):
         raise InvalidFileException()
     try:
-        file_name = "_".join(problem.title.split()) + "#" + generate_random_string()
+        file_name = "_".join(problem.title.split()) + "_" + generate_random_string()
         file_path = f"media/import-pdf/{file_name}.pdf"
         with open(file_path, 'wb') as f:
             f.write(file.read())
@@ -76,4 +107,4 @@ def get_problem_pdf(problem_id, token):
     Get problem PDF file
     Permission: Owner or User with any permission that can view problem
     """
-    pass    
+    pass

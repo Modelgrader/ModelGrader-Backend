@@ -21,25 +21,23 @@ def upload_pdf(request, problem_id:str):
             "error": "File not found."
         }, status=status.HTTP_404_NOT_FOUND)
     try:
-        response = problem_service.upload_pdf(problem_id, file, token)
-        return Response({
-            "status": 204,
-        }, status=status.HTTP_204_NO_CONTENT)
+        problem_service.upload_pdf(problem_id, file, token)
+        return Response(status=status.HTTP_204_NO_CONTENT)
     except Exception as e:
+        errStatus = 500
         if isinstance(e, problem_service.InvalidTokenException):
-            status = 401
+            errStatus = 401
         elif isinstance(e, problem_service.ProblemNotFoundException):
-            status = 404
+            errStatus = 404
         elif isinstance(e, problem_service.PermissionDeniedException):
-            status = 403
+            errStatus = 403
         elif isinstance(e, problem_service.InvalidFileException):
-            status = 400
-        else:
-            status = 500
+            errStatus = 400
+        print("Error: ", e)
         return Response({
-            "status": status,
+            "status": errStatus,
             "error": str(e)
-        }, status=status)
+        }, status=errStatus)
 
 @api_view([GET])
 def get_problem_pdf(request, problem_id:str):
@@ -52,3 +50,26 @@ def get_problem_pdf(request, problem_id:str):
     500: Internal Server Error
     """
     pass
+
+@api_view([GET])
+def get_problem(request, problem_id:str):
+    token = extract_bearer_token(request)
+    if not token:
+        return Response({
+            "status": 401,
+            "error": "Unauthorized."
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    try:
+        problem = problem_service.get_problem(problem_id, request, token)
+        return Response(problem, status=status.HTTP_200_OK)
+    except Exception as e:
+        errStatus = 500
+        if isinstance(e, problem_service.ProblemNotFoundException):
+            errStatus = 404 
+        elif isinstance(e, problem_service.PermissionDeniedException):
+            errStatus = 403
+        print("Error: ", e)
+        return Response({
+            "status": errStatus,
+            "error": str(e)
+        }, status=errStatus)
