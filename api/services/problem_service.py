@@ -4,12 +4,8 @@ from .auth_service import verifyToken
 from .permission_service import canManageProblem
 from ..utility import generate_random_string, check_pdf
 from .service_result import ServiceResult
-from api.utility import passwordEncryption
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from api.sandbox.grader import PythonGrader
-from rest_framework import status
 from django.forms.models import model_to_dict
+from ..errors.common import *
 
 def verifyProblem(problem_id):
     try:
@@ -19,39 +15,11 @@ def verifyProblem(problem_id):
         return True
     except Problem.DoesNotExist:
         return False
-    
-class InvalidTokenException(Exception):
-    def __init__(self):
-        self.message = "Token expired or invalid."
-        self.status = 401
-        super().__init__(self.message)
 
-class ProblemNotFoundException(Exception):
-    def __init__(self):
-        self.message = "Problem not found."
-        self.status = 404
-        super().__init__(self.message)
-
-class PermissionDeniedException(Exception):
-    def __init__(self):
-        self.message = "You do not have permission to manage this problem."
-        self.status = 403
-        super().__init__(self.message)
-
-class ProblemNotFoundException(Exception):
-    def __init__(self):
-        self.message = "Problem not found."
-        self.status = 404
-        super().__init__(self.message)
-
-class InvalidFileException(Exception):
-    pass
-
-def get_problem(problem_id,request, token):
+def get_problem(problem_id, request, token):
     try:
         problem = Problem.objects.get(problem_id=problem_id)
         testcases = Testcase.objects.filter(problem=problem,deprecated=False)
-        
         domain = request.get_host()
         pdf_filename = problem.pdf_url
         problem.pdf_url = f"http://{domain}/media/import-pdf/{pdf_filename}"
@@ -60,7 +28,7 @@ def get_problem(problem_id,request, token):
             "testcases": [model_to_dict(testcase) for testcase in testcases]
         }
     except Problem.DoesNotExist:
-        raise ProblemNotFoundException()
+        raise ItemNotFoundError()
     except Exception as e:
         print("Error: ", e)
         raise e
@@ -81,13 +49,13 @@ def upload_pdf(problem_id, file, token):
     """
     problem = Problem.objects.get(problem_id=problem_id) if verifyProblem(problem_id) else None
     if not verifyToken(token):
-        raise InvalidTokenException()
+        raise InvalidTokenError()
     if not problem:
-        raise ProblemNotFoundException()
+        raise ItemNotFoundError()
     if not canManageProblem(token, problem_id):
-        raise PermissionDeniedException()
+        raise PermissionDeniedError()
     if not check_pdf(file):
-        raise InvalidFileException()
+        raise InvalidFileError()
     try:
         file_name = "_".join(problem.title.split()) + "_" + generate_random_string()
         file_path = f"media/import-pdf/{file_name}.pdf"

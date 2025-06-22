@@ -5,39 +5,27 @@ from ..constant import PUT, GET
 from rest_framework import status
 from ..utility import extract_bearer_token, ERROR_TYPE_TO_STATUS
 from ..services import problem_service
+from ..errors.common import *
 
 @api_view([PUT])
 def upload_pdf(request, problem_id:str):
-    file = request.FILES.get('file')
-    token = extract_bearer_token(request)
-    if not token:
-        return Response({
-            "status": 401,
-            "error": "Unauthorized."
-        }, status=status.HTTP_401_UNAUTHORIZED)
-    if not file:
-        return Response({
-            "status": 404,
-            "error": "File not found."
-        }, status=status.HTTP_404_NOT_FOUND)
     try:
+        file = request.FILES.get('file')
+        token = extract_bearer_token(request)
+        if not token:
+            raise InvalidTokenError()
+        if not file:
+            raise InvalidFileError()
         problem_service.upload_pdf(problem_id, file, token)
         return Response(status=status.HTTP_204_NO_CONTENT)
     except Exception as e:
-        errStatus = 500
-        if isinstance(e, problem_service.InvalidTokenException):
-            errStatus = 401
-        elif isinstance(e, problem_service.ProblemNotFoundException):
-            errStatus = 404
-        elif isinstance(e, problem_service.PermissionDeniedException):
-            errStatus = 403
-        elif isinstance(e, problem_service.InvalidFileException):
-            errStatus = 400
-        print("Error: ", e)
-        return Response({
-            "status": errStatus,
-            "error": str(e)
-        }, status=errStatus)
+        if (isinstance(e, GraderException)):
+            return Response({
+                "status": e.status,
+                "error": e.error
+            }, status=e.status)
+        else:
+            raise InternalServerError()
 
 @api_view([GET])
 def get_problem_pdf(request, problem_id:str):
