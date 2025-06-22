@@ -1,25 +1,38 @@
 # from ..utility import JSONParser, JSONParserOne, passwordEncryption
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-from api.sandbox.grader import PythonGrader
-from ..constant import GET,POST,PUT,DELETE
-from ..models import Account, Problem,Testcase
-from rest_framework import status
+from ..models import *
+from .auth_service import verifyToken
+from .permission_service import canManageProblem
+from ..utility import generate_random_string, check_pdf
+from .service_result import ServiceResult
 from django.forms.models import model_to_dict
-from ..serializers import *
+from ..errors.common import *
 
-from ..controllers.problem.create_problem import *
-from ..controllers.problem.update_problem import *
-from ..controllers.problem.delete_problem import *
-from ..controllers.problem.get_problem import *
-from ..controllers.problem.get_all_problems import *
-from ..controllers.problem.remove_bulk_problems import *
-from ..controllers.problem.get_all_problems_by_account import *
-from ..controllers.problem.validate_program import *
-from ..controllers.problem.get_all_problem_with_best_submission import *
-from ..controllers.problem.get_problem_in_topic_with_best_submission import *
-from ..controllers.problem.update_group_permission_to_problem import *
-from ..controllers.problem.get_problem_public import *
+def verifyProblem(problem_id):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+        if not problem:
+            return False
+        return True
+    except Problem.DoesNotExist:
+        return False
+
+def get_problem(problem_id, request, token):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+        testcases = Testcase.objects.filter(problem=problem,deprecated=False)
+        domain = request.get_host()
+        pdf_filename = problem.pdf_url
+        problem.pdf_url = f"http://{domain}/media/import-pdf/{pdf_filename}"
+        return {
+            **model_to_dict(problem),
+            "testcases": [model_to_dict(testcase) for testcase in testcases]
+        }
+    except Problem.DoesNotExist:
+        raise ItemNotFoundError()
+    except Exception as e:
+        print("Error: ", e)
+        raise e
+
 
 def upload_pdf(problem_id, file, token):
     # Get user from Token
@@ -34,5 +47,25 @@ def upload_pdf(problem_id, file, token):
     403: Forbidden - No permission (User found)
     500: Internal Server Error
     """
-
-    return ""
+    problem = Problem.objects.get(problem_id=problem_id) if verifyProblem(problem_id) else None
+    if not verifyToken(token):
+        raise InvalidTokenError()
+    if not problem:
+        raise ItemNotFoundError()
+    if not canManageProblem(token, problem_id):
+        raise PermissionDeniedError()
+    if not check_pdf(file):
+        raise InvalidFileError()
+    try:
+        file_name = "_".join(problem.title.split()) + "_" + generate_random_string()
+        file_path = f"media/import-pdf/{file_name}.pdf"
+        with open(file_path, 'wb') as f:
+            f.write(file.read())
+        problem.pdf_url = file_name + ".pdf"
+        problem.save()
+    except Exception as e:
+        return ServiceResult.error(
+            message=f"An error occurred while uploading the PDF: {str(e)}",
+            errorType="internal_error"
+        )
+    return None
