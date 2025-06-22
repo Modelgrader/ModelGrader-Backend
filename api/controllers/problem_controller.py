@@ -25,7 +25,7 @@ def upload_pdf(request, problem_id:str):
                 "error": e.error
             }, status=e.status)
         else:
-            raise InternalServerError()
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view([GET])
 def get_problem_pdf(request, problem_id:str):
@@ -41,23 +41,19 @@ def get_problem_pdf(request, problem_id:str):
 
 @api_view([GET])
 def get_problem(request, problem_id:str):
-    token = extract_bearer_token(request)
-    if not token:
-        return Response({
-            "status": 401,
-            "error": "Unauthorized."
-        }, status=status.HTTP_401_UNAUTHORIZED)
     try:
+        token = extract_bearer_token(request)
+        if not token:
+            raise InvalidTokenError()
+    
         problem = problem_service.get_problem(problem_id, request, token)
         return Response(problem, status=status.HTTP_200_OK)
+
     except Exception as e:
-        errStatus = 500
-        if isinstance(e, problem_service.ProblemNotFoundException):
-            errStatus = 404 
-        elif isinstance(e, problem_service.PermissionDeniedException):
-            errStatus = 403
-        print("Error: ", e)
-        return Response({
-            "status": errStatus,
-            "error": str(e)
-        }, status=errStatus)
+        if (isinstance(e, GraderException)):
+            return Response({
+                "status": e.status,
+                "error": e.error
+            }, status=e.status)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
