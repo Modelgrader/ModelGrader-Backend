@@ -69,10 +69,3 @@ def upload_pdf(problem_id, file, token):
             errorType="internal_error"
         )
     return None
-
-def get_problem_pdf(problem_id, token):
-    """
-    Get problem PDF file
-    Permission: Owner or User with any permission that can view problem
-    """
-    pass
