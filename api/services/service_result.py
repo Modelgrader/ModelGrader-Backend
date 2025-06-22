@@ -5,7 +5,7 @@ class ServiceResult:
         self.errorType = None
 
     @classmethod
-    def sucsess(cls, message: str = "", data: dict = None):
+    def success(cls, message: str = "", data: dict = None):
         return cls(success=True, message=message, data=data)
     
     @classmethod
