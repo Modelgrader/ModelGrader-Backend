@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import account,auth,problem, script,submission,topic,collection,group
+from .controllers import problem_controller
 
 
 urlpatterns = [
@@ -51,6 +52,9 @@ urlpatterns = [
 
     path('submissions',submission.all_submission_view),
 
+    path('v1/problems/<str:problem_id>',problem_controller.get_problem),
+    path('v1/problems/<str:problem_id>/import/pdf',problem_controller.upload_pdf),
+    path('v1/problems/<str:problem_id>/pdf',problem_controller.get_problem_pdf),
 
     path('script',script.run_script),
 ]
