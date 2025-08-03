@@ -6,7 +6,7 @@ from rest_framework import status
 from ..utility import extract_bearer_token, ERROR_TYPE_TO_STATUS
 from ..services import problem_service
 from ..errors.common import *
-
+from ..wrappers.validate_token import validate_token
 @api_view([PUT])
 def upload_pdf(request, problem_id:str):
     try:
@@ -28,6 +28,7 @@ def upload_pdf(request, problem_id:str):
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view([GET])
+@validate_token
 def get_problem_pdf(request, problem_id:str):
     """
     Get problem PDF file
@@ -40,15 +41,11 @@ def get_problem_pdf(request, problem_id:str):
     pass
 
 @api_view([GET])
+@validate_token
 def get_problem(request, problem_id:str):
     try:
-        token = extract_bearer_token(request)
-        if not token:
-            raise InvalidTokenError()
-    
         problem = problem_service.get_problem(problem_id, request, token)
         return Response(problem, status=status.HTTP_200_OK)
-
     except Exception as e:
         if (isinstance(e, GraderException)):
             return Response({
