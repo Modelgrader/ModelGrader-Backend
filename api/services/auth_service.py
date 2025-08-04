@@ -1,6 +1,7 @@
 from django.forms.models import model_to_dict
 from time import time
 from ..models import Account
+from ..errors.common import *
 
 def verifyToken(token):
     """
@@ -16,3 +17,14 @@ def verifyToken(token):
             return False
     except Account.DoesNotExist:
         return False
+    
+def getAccountToken(token):
+    """
+    Get account from token
+    Return: account object
+    """
+    try:
+        account = Account.objects.get(token=token)
+        return account
+    except Account.DoesNotExist:
+        raise InvalidTokenError()

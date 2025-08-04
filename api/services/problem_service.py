@@ -1,11 +1,13 @@
 # from ..utility import JSONParser, JSONParserOne, passwordEncryption
 from ..models import *
-from .auth_service import verifyToken
+from .auth_service import verifyToken, getAccountToken
 from .permission_service import canManageProblem
 from ..utility import generate_random_string, check_pdf
 from .service_result import ServiceResult
 from django.forms.models import model_to_dict
 from ..errors.common import *
+from api.sandbox.grader import PythonGrader
+from ..serializers import *
 
 def verifyProblem(problem_id):
     try:
@@ -90,3 +92,46 @@ def get_problem_pdf(problem_id, token):
     except Exception as e:
         print("Error: ", e)
         raise e 
+    
+def create_problem(data, token):
+    try:
+        if not verifyToken(token):
+            return InvalidTokenError()
+        
+        account = getAccountToken(token)
+        running_result = PythonGrader(data['solution'],data['testcases'],1,1.5).generate_output()
+
+        problem = Problem(
+            language = data['language'],
+            creator = account,
+            title = data['title'],
+            description = data['description'],
+            solution = data['solution'],
+            time_limit = data['time_limit'],
+            allowed_languages = data['allowed_languages'],
+            view_mode = data['view_mode'],
+        )
+
+        testcases = []
+        for unit in running_result.data:
+            testcases.append(
+                Testcase(
+                    problem = problem,
+                    input = unit.input,
+                    output = unit.output,
+                    runtime_status = unit.runtime_status,
+                )
+            )
+
+        problem_serialize = ProblemSerializer(problem)
+        testcases_serialize = TestcaseSerializer(testcases,many=True)
+
+        problem.save()
+        Testcase.objects.bulk_create(testcases)
+
+        return problem_serialize, testcases_serialize
+    except Exception as e:
+        print("Error: ", e)
+        raise e
+        
+        
