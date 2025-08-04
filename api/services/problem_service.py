@@ -6,7 +6,8 @@ from ..utility import generate_random_string, check_pdf
 from .service_result import ServiceResult
 from django.forms.models import model_to_dict
 from ..errors.common import *
-from api.sandbox.grader import PythonGrader
+from ..errors.grader import *
+from api.sandbox.grader import Grader
 from ..serializers import *
 
 def verifyProblem(problem_id):
@@ -96,7 +97,7 @@ def get_problem_pdf(problem_id, token):
 def create_problem(data, token):
     try:
         account = getAccountToken(token)
-        running_result = PythonGrader(data['solution'],data['testcases'],1,1.5).generate_output()
+        running_result = Grader[data['language']](data['solution'],data['testcases'],1,1.5).generate_output()
 
         problem = Problem(
             language = data['language'],
@@ -131,4 +132,61 @@ def create_problem(data, token):
         print("Error: ", e)
         raise e
         
+def update_problem(data, token, problem_id):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+
+        if not verifyToken(token):
+            raise InvalidTokenError()
         
+        if not canManageProblem(token, problem_id):
+            raise PermissionDeniedError()
+        
+        testcases = Testcase.objects.filter(problem_id=problem_id, deprecated=False)
+        
+        problem.title = data.get("title",problem.title)
+        problem.language = data.get("language",problem.language)
+        problem.description = data.get("description",problem.description)
+        problem.solution = data.get("solution",problem.solution)
+        problem.time_limit = data.get("time_limit",problem.time_limit)  
+        problem.is_private = data.get("is_private",problem.is_private)
+        problem.allowed_languages = data.get("allowed_languages",problem.allowed_languages)
+        problem.view_mode = data.get("view_mode", problem.view_mode)
+
+        problem.updated_date = timezone.now()
+        testcase_result = None
+        if 'testcases' in data:
+            running_result = Grader[data['language']](problem.solution,data['testcases'],1,1.5).generate_output()
+
+            for testcase in testcases:
+                testcase.deprecated = True
+                testcase.save()
+            testcase_result = []
+            for unit in running_result.data:
+                new_testcase = Testcase(
+                    problem = problem,
+                    input = unit.input,
+                    output = unit.output,
+                    runtime_status = unit.runtime_status
+                )
+                new_testcase.save()
+                testcase_result.append(new_testcase)
+        
+        if 'solution' in data:
+            testcases = Testcase.objects.filter(problem=problem,deprecated=False)
+            program_input = [i.input for i in testcases]
+            running_result = Grader[data['language']](problem.solution,program_input,1,1.5).generate_output()
+
+            if not running_result.runnable:
+                raise CodeExecutionError()
+            
+        serialized_problem = ProblemSerializer(problem).data
+        serialized_testcases = TestcaseSerializer(testcase_result or testcases, many=True).data
+
+        problem.save()
+        return serialized_problem, serialized_testcases
+    except Problem.DoesNotExist:
+        raise ItemNotFoundError()
+    except Exception as e:
+        print("Error:", e)
+        raise e

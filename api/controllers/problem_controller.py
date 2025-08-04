@@ -89,4 +89,19 @@ def create_problem(request, token):
             }, status=e.status)
         else:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view([PUT])
+@validate_token
+def update_problem(request, token, problem_id):
+    try:
+        problem, testcases = problem_service.update_problem(request.data, token, problem_id)
+        return Response({**problem,'testcases': testcases},status=status.HTTP_201_CREATED)
+    except Exception as e:
+        if (isinstance(e, GraderException)):
+            return Response({
+                "status": e.status,
+                "error": e.error
+            }, status=e.status)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
