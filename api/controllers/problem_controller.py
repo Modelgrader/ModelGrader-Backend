@@ -7,6 +7,8 @@ from ..utility import extract_bearer_token, ERROR_TYPE_TO_STATUS
 from ..services import problem_service
 from ..errors.common import *
 from ..wrappers.validate_token import validate_token
+from django.http import FileResponse
+
 @api_view([PUT])
 def upload_pdf(request, problem_id:str):
     try:
@@ -29,7 +31,7 @@ def upload_pdf(request, problem_id:str):
 
 @api_view([GET])
 @validate_token
-def get_problem_pdf(request, problem_id:str):
+def get_problem_pdf(request, problem_id:str, token):
     """
     Get problem PDF file
     200: OK
@@ -38,11 +40,21 @@ def get_problem_pdf(request, problem_id:str):
     404: Not Found - Problem not found
     500: Internal Server Error
     """
-    pass
+    try:
+        pdf_file = problem_service.get_problem_pdf(problem_id, token)
+        return FileResponse(pdf_file, content_type='application/pdf')
+    except Exception as e:
+        if (isinstance(e, GraderException)):
+            return Response({
+                "status": e.status,
+                "error": e.error
+            }, status=e.status)
+        else :
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view([GET])
 @validate_token
-def get_problem(request, problem_id:str):
+def get_problem(request, problem_id:str, token):
     try:
         problem = problem_service.get_problem(problem_id, request, token)
         return Response(problem, status=status.HTTP_200_OK)

@@ -69,3 +69,24 @@ def upload_pdf(problem_id, file, token):
             errorType="internal_error"
         )
     return None
+
+def get_problem_pdf(problem_id, token):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+        if not verifyToken(token):
+            raise InvalidTokenError()
+        if not canManageProblem(token, problem_id):
+            raise PermissionDeniedError()
+        
+        file_path = f"media/import-pdf/{problem.pdf_url}"
+        pdf_file = open(file_path, 'rb')
+        
+        if not pdf_file:
+            raise ItemNotFoundError()
+
+        return pdf_file
+    except Problem.DoesNotExist:
+        raise ItemNotFoundError()
+    except Exception as e:
+        print("Error: ", e)
+        raise e 
