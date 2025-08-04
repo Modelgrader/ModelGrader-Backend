@@ -95,9 +95,6 @@ def get_problem_pdf(problem_id, token):
     
 def create_problem(data, token):
     try:
-        if not verifyToken(token):
-            return InvalidTokenError()
-        
         account = getAccountToken(token)
         running_result = PythonGrader(data['solution'],data['testcases'],1,1.5).generate_output()
 
