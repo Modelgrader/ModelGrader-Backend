@@ -25,6 +25,10 @@ def getAccountByToken(token):
     """
     try:
         account = Account.objects.get(token=token)
+        if account.token_expire < time():
+            raise InvalidTokenError()
         return account
     except Account.DoesNotExist:
         raise InvalidTokenError()
+    except Exception as e:
+        raise e
