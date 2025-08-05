@@ -91,7 +91,6 @@ def get_problem_pdf(problem_id, token):
     except Problem.DoesNotExist:
         raise ItemNotFoundError()
     except Exception as e:
-        print("Error: ", e)
         raise e 
     
 def create_problem(data, token):
@@ -129,7 +128,6 @@ def create_problem(data, token):
 
         return problem_serialize, testcases_serialize
     except Exception as e:
-        print("Error: ", e)
         raise e
         
 def update_problem(data, token, problem_id):
@@ -188,5 +186,4 @@ def update_problem(data, token, problem_id):
     except Problem.DoesNotExist:
         raise ItemNotFoundError()
     except Exception as e:
-        print("Error:", e)
         raise e
