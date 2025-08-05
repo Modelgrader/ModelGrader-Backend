@@ -1,6 +1,6 @@
 # from ..utility import JSONParser, JSONParserOne, passwordEncryption
 from ..models import *
-from .auth_service import verifyToken, getAccountToken
+from .auth_service import verifyToken, getAccountByToken
 from .permission_service import canManageProblem
 from ..utility import generate_random_string, check_pdf
 from .service_result import ServiceResult
@@ -96,7 +96,7 @@ def get_problem_pdf(problem_id, token):
     
 def create_problem(data, token):
     try:
-        account = getAccountToken(token)
+        account = getAccountByToken(token)
         running_result = Grader[data['language']](data['solution'],data['testcases'],1,1.5).generate_output()
 
         problem = Problem(

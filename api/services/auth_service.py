@@ -18,7 +18,7 @@ def verifyToken(token):
     except Account.DoesNotExist:
         return False
     
-def getAccountToken(token):
+def getAccountByToken(token):
     """
     Get account from token
     Return: account object
