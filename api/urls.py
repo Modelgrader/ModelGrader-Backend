@@ -56,7 +56,7 @@ urlpatterns = [
     path('v1/problems/<str:problem_id>',problem_controller.get_or_update_problem),
     path('v1/problems/<str:problem_id>/import/pdf',problem_controller.upload_pdf),
     path('v1/problems/<str:problem_id>/pdf',problem_controller.get_problem_pdf),
-    path('v1/problems/create/', problem_controller.create_problem),
+    path('v1/problems', problem_controller.create_problem),
 
     path('script',script.run_script),
 ]
