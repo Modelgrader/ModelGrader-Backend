@@ -52,8 +52,6 @@ def get_problem_pdf(request, problem_id:str, token):
         else :
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view([GET])
-@validate_token
 def get_problem(request, problem_id:str, token):
     try:
         problem = problem_service.get_problem(problem_id, request, token)
@@ -89,10 +87,8 @@ def create_problem(request, token):
             }, status=e.status)
         else:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-@api_view([PUT])
-@validate_token
-def update_problem(request, token, problem_id):
+  
+def update_problem(request, problem_id, token):
     try:
         problem, testcases = problem_service.update_problem(request.data, token, problem_id)
         return Response({**problem,'testcases': testcases},status=status.HTTP_201_CREATED)
@@ -105,3 +101,11 @@ def update_problem(request, token, problem_id):
         else:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
+@api_view([GET, PUT])
+@validate_token
+def get_or_update_problem(request, problem_id, token):
+    if request.method == GET:
+        return get_problem(request, problem_id, token)
+    elif request.method == PUT:
+        return update_problem(request, problem_id, token)
+    
