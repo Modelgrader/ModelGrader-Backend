@@ -45,6 +45,7 @@ class Problem(models.Model):
     sharing = models.BooleanField(default=False,blank=True)
     allowed_languages = models.CharField(max_length=1000,blank=True,default="")
     pdf_url = models.TextField(null=True,blank=True,default=None)
+    view_mode = models.CharField(max_length=10, default="plate", blank=True)
     difficulty = models.IntegerField(default=0,blank=True)
 
 class Testcase(models.Model):

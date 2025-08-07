@@ -6,6 +6,6 @@ def validate_token(function):
         token = extract_bearer_token(request)
         if not token:
             raise InvalidTokenError()
-        return function(request, *args, **kwargs)
+        return function(request, token=token, *args, **kwargs)
     return wrapper
 

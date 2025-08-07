@@ -1,11 +1,14 @@
 # from ..utility import JSONParser, JSONParserOne, passwordEncryption
 from ..models import *
-from .auth_service import verifyToken
+from .auth_service import verifyToken, getAccountByToken
 from .permission_service import canManageProblem
 from ..utility import generate_random_string, check_pdf
 from .service_result import ServiceResult
 from django.forms.models import model_to_dict
 from ..errors.common import *
+from ..errors.grader import *
+from api.sandbox.grader import Grader
+from ..serializers import *
 
 def verifyProblem(problem_id):
     try:
@@ -69,3 +72,118 @@ def upload_pdf(problem_id, file, token):
             errorType="internal_error"
         )
     return None
+
+def get_problem_pdf(problem_id, token):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+        if not verifyToken(token):
+            raise InvalidTokenError()
+        if not canManageProblem(token, problem_id):
+            raise PermissionDeniedError()
+        
+        file_path = f"media/import-pdf/{problem.pdf_url}"
+        pdf_file = open(file_path, 'rb')
+        
+        if not pdf_file:
+            raise ItemNotFoundError()
+
+        return pdf_file
+    except Problem.DoesNotExist:
+        raise ItemNotFoundError()
+    except Exception as e:
+        raise e 
+    
+def create_problem(data, token):
+    try:
+        account = getAccountByToken(token)
+        running_result = Grader[data['language']](data['solution'],data['testcases'],1,1.5).generate_output()
+
+        problem = Problem(
+            language = data['language'],
+            creator = account,
+            title = data['title'],
+            description = data['description'],
+            solution = data['solution'],
+            time_limit = data['time_limit'],
+            allowed_languages = data['allowed_languages'],
+            view_mode = data['view_mode'],
+        )
+
+        testcases = []
+        for unit in running_result.data:
+            testcases.append(
+                Testcase(
+                    problem = problem,
+                    input = unit.input,
+                    output = unit.output,
+                    runtime_status = unit.runtime_status,
+                )
+            )
+
+        problem_serialize = ProblemSerializer(problem)
+        testcases_serialize = TestcaseSerializer(testcases,many=True)
+
+        problem.save()
+        Testcase.objects.bulk_create(testcases)
+
+        return problem_serialize, testcases_serialize
+    except Exception as e:
+        raise e
+        
+def update_problem(data, token, problem_id):
+    try:
+        problem = Problem.objects.get(problem_id=problem_id)
+
+        if not verifyToken(token):
+            raise InvalidTokenError()
+        
+        if not canManageProblem(token, problem_id):
+            raise PermissionDeniedError()
+        
+        testcases = Testcase.objects.filter(problem_id=problem_id, deprecated=False)
+        
+        problem.title = data.get("title",problem.title)
+        problem.language = data.get("language",problem.language)
+        problem.description = data.get("description",problem.description)
+        problem.solution = data.get("solution",problem.solution)
+        problem.time_limit = data.get("time_limit",problem.time_limit)  
+        problem.is_private = data.get("is_private",problem.is_private)
+        problem.allowed_languages = data.get("allowed_languages",problem.allowed_languages)
+        problem.view_mode = data.get("view_mode", problem.view_mode)
+
+        problem.updated_date = timezone.now()
+        testcase_result = None
+        if 'testcases' in data:
+            running_result = Grader[data['language']](problem.solution,data['testcases'],1,1.5).generate_output()
+
+            for testcase in testcases:
+                testcase.deprecated = True
+                testcase.save()
+            testcase_result = []
+            for unit in running_result.data:
+                new_testcase = Testcase(
+                    problem = problem,
+                    input = unit.input,
+                    output = unit.output,
+                    runtime_status = unit.runtime_status
+                )
+                new_testcase.save()
+                testcase_result.append(new_testcase)
+        
+        if 'solution' in data:
+            testcases = Testcase.objects.filter(problem=problem,deprecated=False)
+            program_input = [i.input for i in testcases]
+            running_result = Grader[data['language']](problem.solution,program_input,1,1.5).generate_output()
+
+            if not running_result.runnable:
+                raise CodeExecutionError()
+            
+        serialized_problem = ProblemSerializer(problem).data
+        serialized_testcases = TestcaseSerializer(testcase_result or testcases, many=True).data
+
+        problem.save()
+        return serialized_problem, serialized_testcases
+    except Problem.DoesNotExist:
+        raise ItemNotFoundError()
+    except Exception as e:
+        raise e
