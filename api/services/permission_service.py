@@ -1,4 +1,4 @@
-from ..models import Account, Problem,Testcase
+from ..models import Account, Problem,Topic
 from django.forms.models import model_to_dict
 
 def canManageProblem(token, problem_id):
@@ -13,5 +13,18 @@ def canManageProblem(token, problem_id):
         problem = model_to_dict(problem)
         if account['account_id'] == problem['creator']:
             return True #Only creator can manage
+        return False
     except (Account.DoesNotExist, Problem.DoesNotExist):
+        return False
+    
+def canManageTopic(token, topic_id):
+    try:
+        account = Account.objects.get(token=token)
+        account = model_to_dict(account)
+        topic = Topic.objects.get(topic_id=topic_id)
+        topic = model_to_dict(topic)
+        if account['account_id'] == topic['creator']:
+            return True #Only creator can manage
+        return False
+    except (Account.DoesNotExist, Topic.DoesNotExist):
         return False

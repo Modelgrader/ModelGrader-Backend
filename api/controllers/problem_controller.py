@@ -13,19 +13,16 @@ def upload_pdf(request, problem_id:str):
         file = request.FILES.get('file')
         token = extract_bearer_token(request)
         if not token:
-            raise InvalidTokenError()
+            return InvalidTokenError().django()
         if not file:
-            raise InvalidFileError()
+            return InvalidFileError().django()
         problem_service.upload_pdf(problem_id, file, token)
         return Response(status=status.HTTP_204_NO_CONTENT)
     except Exception as e:
         if (isinstance(e, GraderException)):
-            return Response({
-                "status": e.status,
-                "error": e.error
-            }, status=e.status)
+            return e.django()
         else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return InternalServerError().django()
 
 @api_view([GET])
 def get_problem_pdf(request, problem_id:str):
