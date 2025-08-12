@@ -10,8 +10,7 @@ pipeline {
         }
         stage('Deploy Production') {
             steps {
-                sh 'pm2 start start-prod.sh --name "grader-prod"'
-                sh 'pm2 save'
+                sh 'python manage.py runserver 0.0.0.0:8006'
             }
         }
     }
