@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        ENV_FILE=credentials('grader-backend-env-file')
+        ENV_FILE=credentials('grader-backend-prod')
         PORT=8005
         IMAGE_NAME='grader-backend-prod'
         CONTAINER_NAME='grader-backend-prod-container'
