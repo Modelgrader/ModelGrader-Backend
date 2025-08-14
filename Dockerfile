@@ -17,7 +17,7 @@ COPY . .
 RUN python manage.py migrate
 
 # port where the Django app runs  
-EXPOSE 8000  
+EXPOSE 8000
 
 # start server  
 CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
