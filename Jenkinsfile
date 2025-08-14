@@ -1,23 +1,35 @@
 pipeline {
-    agent { docker { image 'python:3.12.11-alpine3.22' } }
+    agent any
     environment {
-        PORT = '8006'
-        HOST = '0.0.0.0'
-        FRONTEND_URL = credentials('frontend-url')
-        TOKEN_LIFETIME_SECOND = credentials('token-lifetime-second')
+        ENV_FILE=credentials('grader-backend-env-file')
+        PORT=8005
+        IMAGE_NAME='grader-backend-prod'
+        CONTAINER_NAME='grader-backend-prod-container'
     }
     stages {
-        stage('Build Production') {
+        stage('Setup Environment') {
             steps {
-                sh 'python -m venv env'
-                sh '. ./env/bin/activate'
-                sh 'pip install -r requirements.txt'
-                sh 'python manage.py migrate'
+                echo "Create environment file with credentials"
+                sh '''
+                cp $ENV_FILE .env
+                '''
             }
         }
-        stage('Deploy Production') {
+        stage('Build Image') {
             steps {
-                sh 'python manage.py runserver ${HOST}:${PORT}'
+                echo "Build Docker image: ${IMAGE_NAME}"
+                sh '''
+                docker build -t $IMAGE_NAME:latest .
+                '''
+            }
+        }
+        stage('Run Container') {
+            steps {
+                echo "Run Docker container: ${CONTAINER_NAME} on port: ${PORT}"
+                sh '''
+                docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true
+                docker run -d --name $CONTAINER_NAME -p $PORT:3000 $IMAGE_NAME:latest
+                '''
             }
         }
     }
