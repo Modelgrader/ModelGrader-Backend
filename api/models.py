@@ -73,7 +73,7 @@ class Topic(models.Model):
     creator = models.ForeignKey(Account,on_delete=models.CASCADE,db_column="creator_id")
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=100000,null=True,blank=True,default=None)
-    image_url = models.ImageField(upload_to='topic/',null=True,blank=True,default=None)
+    image_url = models.TextField(null=True,blank=True,default=None)
     is_active = models.BooleanField(default=True,blank=True)
     is_private = models.BooleanField(default=False,blank=True)
     created_date = models.DateTimeField(default=timezone.now)

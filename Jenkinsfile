@@ -1,18 +1,34 @@
 pipeline {
-    agent { docker { image 'python:3.13.6-alpine3.22' } }
+    agent any
+    environment {
+        ENV_FILE=credentials('grader-backend-${environment}')
+        IMAGE_NAME='grader-backend-${environment}'
+        CONTAINER_NAME='grader-backend-${environment}-container'
+    }
     stages {
-        stage('Build Development') {
+        stage('Setup Environment') {
             steps {
-                sh 'git checkout dev'
-                sh 'python -m venv env-dev'
-                sh '. ./env/bin/activate'
-                sh 'pip install -r requirements.txt'
+                echo "Create environment file with credentials"
+                sh '''
+                cp $ENV_FILE .env
+                '''
             }
         }
-        stage('Deploy Development') {
+        stage('Build Image') {
             steps {
-                sh 'pm2 start start-dev.sh --name "grader-dev"'
-                sh 'pm2 save'
+                echo "Build Docker image: ${IMAGE_NAME}"
+                sh '''
+                docker build -t $IMAGE_NAME:latest .
+                '''
+            }
+        }
+        stage('Run Container') {
+            steps {
+                echo "Run Docker container: ${CONTAINER_NAME} on port: ${port}"
+                sh '''
+                docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true
+                docker run -d --name $CONTAINER_NAME -p ${port}:8000 $IMAGE_NAME:latest
+                '''
             }
         }
     }
