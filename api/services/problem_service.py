@@ -23,12 +23,14 @@ def get_problem(problem_id, request, token):
     try:
         problem = Problem.objects.get(problem_id=problem_id)
         testcases = Testcase.objects.filter(problem=problem,deprecated=False)
+        group_permissions = ProblemGroupPermission.objects.filter(problem=problem)
         domain = request.get_host()
         pdf_filename = problem.pdf_url
         problem.pdf_url = f"http://{domain}/media/import-pdf/{pdf_filename}"
         return {
             **model_to_dict(problem),
-            "testcases": [model_to_dict(testcase) for testcase in testcases]
+            "testcases": [model_to_dict(testcase) for testcase in testcases],
+            "group_permissions": [model_to_dict(group_permission) for group_permission in group_permissions],
         }
     except Problem.DoesNotExist:
         raise ItemNotFoundError()
