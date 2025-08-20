@@ -14,10 +14,10 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # copy whole project to your docker home directory. 
 COPY . .  
-RUN python manage.py migrate
 
 # port where the Django app runs  
 EXPOSE 8000
 
 # start server  
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
