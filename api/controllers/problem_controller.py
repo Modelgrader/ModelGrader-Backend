@@ -8,6 +8,7 @@ from ..services import problem_service
 from ..errors.common import *
 from ..wrappers.validate_token import validate_token
 from django.http import FileResponse
+from ..utils.django import ResponseError
 
 @api_view([PUT])
 def upload_pdf(request, problem_id:str):
@@ -21,13 +22,7 @@ def upload_pdf(request, problem_id:str):
         problem_service.upload_pdf(problem_id, file, token)
         return Response(status=status.HTTP_204_NO_CONTENT)
     except Exception as e:
-        if (isinstance(e, GraderException)):
-            return Response({
-                "status": e.status,
-                "error": e.error
-            }, status=e.status)
-        else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return ResponseError(e)
 
 @api_view([GET])
 @validate_token
@@ -44,26 +39,14 @@ def get_problem_pdf(request, problem_id:str, token):
         pdf_file = problem_service.get_problem_pdf(problem_id, token)
         return FileResponse(pdf_file, content_type='application/pdf')
     except Exception as e:
-        if (isinstance(e, GraderException)):
-            return Response({
-                "status": e.status,
-                "error": e.error
-            }, status=e.status)
-        else :
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return ResponseError(e)
 
 def get_problem(request, problem_id:str, token):
     try:
         problem = problem_service.get_problem(problem_id, request, token)
         return Response(problem, status=status.HTTP_200_OK)
     except Exception as e:
-        if (isinstance(e, GraderException)):
-            return Response({
-                "status": e.status,
-                "error": e.error
-            }, status=e.status)
-        else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return ResponseError(e)
         
 @api_view([POST])
 @validate_token
@@ -93,13 +76,7 @@ def update_problem(request, problem_id, token):
         problem, testcases = problem_service.update_problem(request.data, token, problem_id)
         return Response({**problem,'testcases': testcases},status=status.HTTP_201_CREATED)
     except Exception as e:
-        if (isinstance(e, GraderException)):
-            return Response({
-                "status": e.status,
-                "error": e.error
-            }, status=e.status)
-        else:
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return ResponseError(e)
             
 @api_view([GET, PUT])
 @validate_token
