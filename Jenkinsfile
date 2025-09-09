@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        ENV_FILE=credentials('grader-backend-prod')
-        IMAGE_NAME='grader-backend-prod'
-        CONTAINER_NAME='grader-backend-prod-container'
+        ENV_FILE=credentials('grader-backend-${params.Environment}')
+        IMAGE_NAME='grader-backend-${params.Environment}'
+        CONTAINER_NAME='grader-backend-${params.Environment}-container'
     }
     stages {
         stage('Setup Environment') {
@@ -24,10 +24,10 @@ pipeline {
         }
         stage('Run Container') {
             steps {
-                echo "Run Docker container: ${CONTAINER_NAME} on port: ${PORT}"
+                echo "Run Docker container: ${CONTAINER_NAME} on port: ${params.PORT}"
                 sh '''
                 docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p ${PORT}:8000 -p ${PORT}:${PORT} $IMAGE_NAME:latest
+                docker run -d --name $CONTAINER_NAME -p ${params.PORT}:8000 -p ${params.PORT}:${params.PORT} $IMAGE_NAME:latest
                 '''
             }
         }
