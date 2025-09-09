@@ -27,7 +27,7 @@ pipeline {
                 echo "Run Docker container: ${CONTAINER_NAME} on port: ${params.PORT}"
                 sh """
                 docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p ${params.PORT}:8000 -p ${params.PORT}:${params.PORT} $IMAGE_NAME:latest
+                docker run -d --name $CONTAINER_NAME -p ${params.PORT}:8000 $IMAGE_NAME:latest
                 """
             }
         }
