@@ -7,8 +7,7 @@ runner.py
 @/*
 
 env/
-.env
-
+.env*
 # [0-9]*.txt
 
 media/testfile
