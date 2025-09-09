@@ -1,9 +1,9 @@
 pipeline {
     agent any
     environment {
-        ENV_FILE=credentials('grader-backend-${environment}')
-        IMAGE_NAME='grader-backend-${environment}'
-        CONTAINER_NAME='grader-backend-${environment}-container'
+        ENV_FILE=credentials('grader-backend-prod')
+        IMAGE_NAME='grader-backend-prod'
+        CONTAINER_NAME='grader-backend-prod-container'
     }
     stages {
         stage('Setup Environment') {
