@@ -1,1 +1,2 @@
-python manage.py migrate
+#!/bin/bash
+python3 manage.py migrate
