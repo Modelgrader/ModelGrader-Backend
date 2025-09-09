@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage("Setup Environment") {
             steps {
-                echo "Create environment file with credentials"
+                echo "⚙️ Create environment file with credentials"
                 sh """
                 cp $ENV_FILE .env
                 """
@@ -16,20 +16,36 @@ pipeline {
         }
         stage("Build Image") {
             steps {
-                echo "Build Docker image: ${IMAGE_NAME}"
+                echo "⚒️ Build Docker image: ${IMAGE_NAME}"
                 sh """
                 docker build -t $IMAGE_NAME:latest .
                 """
             }
         }
+         stage('Database Migration') {
+            steps {
+                echo "🔄 Running Django migrations..."
+                sh """
+                docker run --rm --network grader-network ${IMAGE_NAME}:latest python manage.py migrate --noinput
+                """
+            }
+        }
         stage("Run Container") {
             steps {
-                echo "Run Docker container: ${CONTAINER_NAME} on port: ${params.PORT}"
+                echo "🐳 Run Docker container: ${CONTAINER_NAME} on port: ${params.PORT}"
                 sh """
                 docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true
                 docker run -d --name $CONTAINER_NAME -p ${params.PORT}:8000 --network grader-network $IMAGE_NAME:latest
                 """
             }
+        }
+    }
+    post {
+        success {
+            echo "🎉 Deployment successful!"
+        }
+        failure {
+            echo "🚨 Deployment failed!"
         }
     }
 }
