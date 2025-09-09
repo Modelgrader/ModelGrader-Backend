@@ -24,10 +24,10 @@ pipeline {
         }
         stage('Run Container') {
             steps {
-                echo "Run Docker container: ${CONTAINER_NAME} on port: ${port}"
+                echo "Run Docker container: ${CONTAINER_NAME} on port: ${PORT}"
                 sh '''
                 docker stop $CONTAINER_NAME || true && docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p ${port}:8000 -p ${port}:${port} $IMAGE_NAME:latest
+                docker run -d --name $CONTAINER_NAME -p ${PORT}:8000 -p ${PORT}:${PORT} $IMAGE_NAME:latest
                 '''
             }
         }
