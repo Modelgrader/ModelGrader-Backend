@@ -16,8 +16,8 @@ class AuthService:
 
 class AuthServiceImpl(AuthService):
 
-    def __init__(self):
-        self.auth_repo = AuthRepository()
+    def __init__(self, auth_repo: AuthRepository):
+        self.auth_repo = auth_repo
 
     def verifyToken(self, token) -> bool:
         try:
@@ -42,7 +42,7 @@ class AuthServiceImpl(AuthService):
             return None
 
 # Create service instances for backward compatibility
-auth_service = AuthServiceImpl()
+auth_service = AuthServiceImpl(auth_repo=AuthRepository())
 
 # Keep the original functions for backward compatibility
 def verifyToken(token) -> bool:
